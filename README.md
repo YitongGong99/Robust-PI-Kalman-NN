@@ -140,9 +140,9 @@ $$
 ├─ output_img/          # Visualizations for one-year length experiments
 ├─ README.md
 ├─ LICENSE.             # License for this repository
-├─ fast_train.py.       # Code for 
+├─ fast_train.py        # Code for customized training
 ├─ model.py             # The main python code containing the EKF component and variational parameter bank for VI
-└─
+└─...
 
 ```
 ---
