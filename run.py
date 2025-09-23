@@ -4,7 +4,7 @@ import time
 import tqdm
 
 for lag in [0, 3]:
-    for nn_on in [ 1]:
+    for nn_on in [0, 1]:
         for nn_type in (["FCNN", "GRU", "RNN", "LSTM"] if nn_on else ["FCNN"]):
             for elbo_weight in [0, 1]:
                 for pinn_weight in [0, 0.5]:
