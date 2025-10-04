@@ -35,10 +35,10 @@ The project integrates:
 - (Optional) **Variational Inference (VI)** for Bayesian parameter learning.
 
 Notation used throughout:
-- Price $ S_t $, log-price $ X_t = \log S_t $,
-- Log return $ r_t = X_t - X_{t-1} $,
-- Risk-neutral rate $ r^Q $,
-- Constant terms $ c $ are included in model specifications.
+- Price $S_t$, log-price $X_t = \log S_t$,
+- Log return $r_t = X_t - X_{t-1}$,
+- Risk-neutral rate $r^Q$,
+- Constant terms $c$ are included in model specifications.
 
 ---
 
@@ -46,38 +46,38 @@ Notation used throughout:
 
 ### CARMA (Continuous-time ARMA)
 CARMA(p,q) models describe continuous-time dynamics of $X_t = \log S_t$:
-$$
-a(D) X_t = b(D)\, \dot{W}_t,\quad 
-a(D)=D^p+a_1 D^{p-1}+\cdots+a_p,\quad 
-b(D)=b_0+b_1 D+\cdots+b_q D^q,
-$$
-where $ \dot{W}_t $ is Gaussian white noise (formal derivative of Wiener process).  
+
+$$a(D) X_t = b(D)\, \dot{W}_t,$$
+
+$$a(D)=D^p+a_1 D^{p-1}+\cdots+a_p,$$
+
+$$b(D)=b_0+b_1 D+\cdots+b_q D^q,$$
+
+where $\dot{W}_t$ is Gaussian white noise (formal derivative of Wiener process).  
 For implementation, we use an equivalent **state-space** form:
-$$
-\mathrm{d}w_t = A w_t\,\mathrm{d}t + B\,\mathrm{d}W_t,\qquad
-X_t = C w_t,
-$$
-with $ (A,B,C) $ determined by $(a,b)$. This links time-series structure to SDEs amenable to filtering.
+
+$$\mathrm{d}w_t = A w_t\,\mathrm{d}t + B\,\mathrm{d}W_t,\qquad X_t = C w_t,$$
+
+with $(A,B,C)$ determined by $(a,b)$. This links time-series structure to SDEs amenable to filtering.
 
 ---
 
 ### GARCH (Conditional Volatility)
-To capture volatility clustering in $ r_t $:
-$$
-r_t = c + \epsilon_t,\quad \epsilon_t\sim\mathcal{N}(0,\sigma_t^2),\qquad
-\sigma_t^2 = \omega + \alpha\,\epsilon_{t-1}^2 + \beta\,\sigma_{t-1}^2,
-$$
-typically GARCH(1,1) with $ \omega>0,\alpha,\beta\ge 0 $ and $ \alpha+\beta<1 $.  
+To capture volatility clustering in $r_t$:
+
+$$r_t = c + \epsilon_t,\quad \epsilon_t\sim\mathcal{N}(0,\sigma_t^2),\qquad\sigma_t^2 = \omega + \alpha\,\epsilon_{t-1}^2 + \beta\,\sigma_{t-1}^2,$$
+
+typically GARCH(1,1) with $\omega>0,\alpha,\beta\ge 0$ and $\alpha+\beta<1$.  
 In the hybrid model, GARCH can drive the latent volatility state that feeds the measurement/transition noise of the state-space system.
 
 ---
 
 ### Black–Scholes–Merton (BSM) Pricing
-Under $ \mathbb{Q} $ (risk-neutral measure):
-$$
-\mathrm{d}S_t = r^Q S_t\,\mathrm{d}t + \sigma S_t\,\mathrm{d}W_t^{\mathbb{Q}},
-$$
-implying $ \mathrm{e}^{-r^Q t} S_t $ is a martingale.  
+Under $\mathbb{Q}$ (risk-neutral measure):
+
+$$\mathrm{d}S_t = r^Q S_t\,\mathrm{d}t + \sigma S_t\,\mathrm{d}W_t^{\mathbb{Q}},$$
+
+implying $\mathrm{e}^{-r^Q t} S_t$ is a martingale.  
 We use this as a **no-arbitrage anchor** for PINN-style residuals and for mapping physical-measure dynamics to risk-neutral quantities where needed for option valuation.
 
 ---
@@ -86,13 +86,12 @@ We use this as a **no-arbitrage anchor** for PINN-style residuals and for mappin
 
 ![HMM](./HMM.png)
 Discretizing the continuous model yields a (generally nonlinear) state-space system:
-$$
-w_{t+1} = f(w_t, X_t, \epsilon_p),\qquad
-x_t = g(w_t, \epsilon_m),
-$$
+
+$$w_{t+1} = f(w_t, X_t, \epsilon_p),\qquad x_t = g(w_t, \epsilon_m),$$
+
 - $w_t$: latent states (e.g., CARMA state vector, latent log-volatility),
 - $X_t$: exogenous drivers (possibly transformed by a neural network),
-- $x_t$: observed series (e.g., $ r_t $ or $ \log S_t $),
+- $x_t$: observed series (e.g., $r_t$ or $\log S_t$),
 - $\epsilon_p, \epsilon_m$: process and measurement noise.  
 This admits an **HMM** interpretation, enabling recursive Bayesian estimation.
 
@@ -100,26 +99,21 @@ This admits an **HMM** interpretation, enabling recursive Bayesian estimation.
 
 ### Extended Kalman Filter (EKF) with Fixed-Lag Smoothing
 For nonlinear $f,g$, EKF linearizes about the current estimate:
-$$
-\Psi_t = \left.\frac{\partial f}{\partial w}\right|_{\hat{w}_{t|t}},\quad
-\Phi_t = \left.\frac{\partial h}{\partial w}\right|_{\hat{w}_{t|t-1}}.
-$$
+
+$$\Psi_t = \left.\frac{\partial f}{\partial w}\right|_{\hat{w}_{t|t}},\quad\Phi_t = \left.\frac{\partial h}{\partial w}\right|_{\hat{w}_{t|t-1}}.$$
+
 **Predict:**
-$$
-\hat{w}_{t|t-1} = f(\hat{w}_{t-1|t-1}),\quad
-P_{t|t-1}=\Phi_{t-1} P_{t-1|t-1} \Phi_{t-1}^\top + R_{t-1}.
-$$
+
+$$\hat{w}_{t|t-1} = f(\hat{w}_{t-1|t-1}),\quad P_{t|t-1}=\Phi_{t-1} P_{t-1|t-1} \Phi_{t-1}^\top + R_{t-1}.$$
+
 **Update:**
-$$
-K_t = P_{t|t-1} \Phi_t^\top\big(\Phi_t P_{t|t-1} \Phi_t^\top + S_t\big)^{-1},
-$$
-$$
-\hat{w}_{t|t} = \hat{w}_{t|t-1} + K_t\big(x_t - g(\hat{w}_{t|t-1})\big),
-$$
-$$
-P_{t|t} = (I - K_t \Phi_t)\, P_{t|t-1}\, (I - K_t \Phi_t)^\top + K_t S_t K_t^\top
-\quad\text{(Joseph form)}.
-$$
+
+$$K_t = P_{t|t-1} \Phi_t^\top\big(\Phi_t P_{t|t-1} \Phi_t^\top + S_t\big)^{-1},$$
+
+$$\hat{w}_{t|t} = \hat{w}_{t|t-1} + K_t\big(x_t - g(\hat{w}_{t|t-1})\big),$$
+
+$$P_{t|t} = (I - K_t \Phi_t)\, P_{t|t-1}\, (I - K_t \Phi_t)^\top + K_t S_t K_t^\top\quad\text{(Joseph form)}.$$
+
 **Fixed-Lag Smoothing (FLS)** refines past states \( \hat{w}_{t-\ell|t} \) using information up to time \(t\), reducing one-step lag in predictions and improving latent volatility tracking.
 
 ---
